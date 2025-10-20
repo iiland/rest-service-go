@@ -11,4 +11,5 @@ type Subscription struct {
 	UserID      uuid.UUID `json:"user_id" db:"user_id"`
 	StartDate   string    `json:"start_date" db:"start_date"`       // MM-YYYY
 	EndDate     *string   `json:"end_date,omitempty" db:"end_date"` // nullable
+	//  CHECK (start_date ~ '^\d{2}-\d{4})
 }
