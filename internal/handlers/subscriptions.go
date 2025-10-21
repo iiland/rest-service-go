@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"rest-service/internal/models"
 	"rest-service/internal/repository"
 	"strconv"
+
+	"database/sql"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,6 +29,7 @@ func (h *SubscriptionHandler) Create(c *gin.Context) {
 	}
 	id, err := h.repo.Create(c.Request.Context(), &sub)
 	if err != nil {
+		log.Printf("Error creating subscription: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -35,6 +39,7 @@ func (h *SubscriptionHandler) Create(c *gin.Context) {
 func (h *SubscriptionHandler) GetAll(c *gin.Context) {
 	subs, err := h.repo.GetAll(c.Request.Context())
 	if err != nil {
+		log.Printf("Error fetching all subscriptions: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -50,6 +55,15 @@ func (h *SubscriptionHandler) GetByID(c *gin.Context) {
 	}
 	sub, err := h.repo.GetByID(c.Request.Context(), id)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		} else {
+			log.Printf("Error getting subscription by ID: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+	if sub == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
 		return
 	}
@@ -70,10 +84,15 @@ func (h *SubscriptionHandler) Update(c *gin.Context) {
 	}
 	err = h.repo.Update(c.Request.Context(), id, &sub)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		} else {
+			log.Printf("Error updating subscription: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+	c.Status(http.StatusNoContent)
 }
 
 func (h *SubscriptionHandler) Delete(c *gin.Context) {
@@ -85,10 +104,15 @@ func (h *SubscriptionHandler) Delete(c *gin.Context) {
 	}
 	err = h.repo.Delete(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "subscription not found"})
+		} else {
+			log.Printf("Error deleting subscription: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+	c.Status(http.StatusNoContent)
 }
 
 func (h *SubscriptionHandler) GetSum(c *gin.Context) {
@@ -96,6 +120,13 @@ func (h *SubscriptionHandler) GetSum(c *gin.Context) {
 	end := c.Query("end")
 	userIDStr := c.Query("user_id")
 	serviceName := c.Query("service_name")
+
+	// Проверяем обязательные параметры
+	if start == "" || end == "" || userIDStr == "" || serviceName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "start, end, user_id, and service_name params are required"})
+		return
+	}
+
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
@@ -103,6 +134,7 @@ func (h *SubscriptionHandler) GetSum(c *gin.Context) {
 	}
 	sum, err := h.repo.GetSum(c.Request.Context(), start, end, userID, serviceName)
 	if err != nil {
+		log.Printf("Error getting sum: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
