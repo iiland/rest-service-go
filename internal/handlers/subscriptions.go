@@ -21,6 +21,17 @@ func NewSubscriptionHandler(repo repository.SubscriptionRepository) *Subscriptio
 	return &SubscriptionHandler{repo: repo}
 }
 
+// Create godoc
+// @Summary Create a new subscription
+// @Description Create a new subscription with JSON body
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body models.Subscription true "Subscription data"
+// @Success 201 {object} map[string]int "id of created subscription"
+// @Failure 400 {object} map[string]string "invalid input"
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions [post]
 func (h *SubscriptionHandler) Create(c *gin.Context) {
 	var sub models.Subscription
 	if err := c.ShouldBindJSON(&sub); err != nil {
@@ -36,6 +47,14 @@ func (h *SubscriptionHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": id})
 }
 
+// GetAll godoc
+// @Summary Get all subscriptions
+// @Description Retrieve list of all subscriptions
+// @Tags subscriptions
+// @Produce json
+// @Success 200 {array} models.Subscription
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions [get]
 func (h *SubscriptionHandler) GetAll(c *gin.Context) {
 	subs, err := h.repo.GetAll(c.Request.Context())
 	if err != nil {
@@ -46,6 +65,17 @@ func (h *SubscriptionHandler) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, subs)
 }
 
+// GetByID godoc
+// @Summary Get subscription by ID
+// @Description Get subscription details by its ID
+// @Tags subscriptions
+// @Produce json
+// @Param id path int true "Subscription ID"
+// @Success 200 {object} models.Subscription
+// @Failure 400 {object} map[string]string "invalid id"
+// @Failure 404 {object} map[string]string "subscription not found"
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions/{id} [get]
 func (h *SubscriptionHandler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -70,6 +100,18 @@ func (h *SubscriptionHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, sub)
 }
 
+// Update godoc
+// @Summary Update subscription
+// @Description Update subscription by ID with JSON body
+// @Tags subscriptions
+// @Accept json
+// @Param id path int true "Subscription ID"
+// @Param subscription body models.Subscription true "Subscription data"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string "invalid id or input"
+// @Failure 404 {object} map[string]string "subscription not found"
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions/{id} [put]
 func (h *SubscriptionHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -95,6 +137,16 @@ func (h *SubscriptionHandler) Update(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// Delete godoc
+// @Summary Delete subscription
+// @Description Delete subscription by ID
+// @Tags subscriptions
+// @Param id path int true "Subscription ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string "invalid id"
+// @Failure 404 {object} map[string]string "subscription not found"
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions/{id} [delete]
 func (h *SubscriptionHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -115,6 +167,19 @@ func (h *SubscriptionHandler) Delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// GetSum godoc
+// @Summary Get total cost sum for subscriptions
+// @Description Get sum of subscription prices filtered by start/end dates, user ID and service name
+// @Tags subscriptions
+// @Produce json
+// @Param start query string true "Start date in MM-YYYY"
+// @Param end query string true "End date in MM-YYYY"
+// @Param user_id query string true "User UUID"
+// @Param service_name query string true "Service Name"
+// @Success 200 {object} map[string]int "sum total cost"
+// @Failure 400 {object} map[string]string "missing or invalid parameters"
+// @Failure 500 {object} map[string]string "internal server error"
+// @Router /subscriptions/sum [get]
 func (h *SubscriptionHandler) GetSum(c *gin.Context) {
 	start := c.Query("start")
 	end := c.Query("end")
