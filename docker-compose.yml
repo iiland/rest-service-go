@@ -4,11 +4,17 @@ services:
     environment:
       POSTGRES_DB: rest_service
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: 123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     ports:
@@ -16,9 +22,9 @@ services:
     depends_on:
       - postgres
     environment:
-      - DATABASE_URL=postgres://user:password@postgres:5432/rest_service?sslmode=disable
+      - DATABASE_URL=postgres://postgres:123@postgres:5432/rest_service?sslmode=disable
     volumes:
       - .:/app
-      - /app/vendor  # Если используешь модули
+
 volumes:
   postgres_data:
